@@ -48,3 +48,54 @@ export const getAllProducts = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error", error: err });
   }
 };
+
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await Product.findByIdAndUpdate(id, req.body, { new: true });
+
+    if (!updated) return res.status(404).json({ message: "Product not found" });
+
+    await esClient.index({
+      index: "products",
+      id,
+      document: {
+        name: updated.name,
+        description: updated.description,
+        price: updated.price,
+        category: updated.category,
+        inStock: updated.inStock,
+      },
+    });
+
+    await redisClient.del("top_products");
+
+    res.json(updated);
+  } catch (err) {
+    console.error("❌ Update error:", err);
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await Product.findByIdAndDelete(id);
+
+    if (!deleted) return res.status(404).json({ message: "Product not found" });
+
+    await esClient.delete({
+      index: "products",
+      id,
+    });
+
+    await redisClient.del("top_products");
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error("❌ Delete error:", err);
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
