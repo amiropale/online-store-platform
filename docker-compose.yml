@@ -1,0 +1,69 @@
+services:
+  mongo-user:
+    image: mongo
+    container_name: mongo-user
+    ports:
+      - "27017:27017"
+    volumes:
+      - user-mongo-data:/data/db
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "3001:3000"
+    environment:
+      - MONGO_URI=mongodb://mongo-user:27017/userdb
+      - JWT_SECRET=your_jwt_secret
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+    depends_on:
+      - mongo-user
+      - redis
+      - elasticsearch
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://mongo-product:27017/productdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+    depends_on:
+      - redis
+      - elasticsearch
+      - mongo-product
+
+  mongo-product:
+    image: mongo
+    container_name: mongo-product
+    ports:
+      - "27018:27017"
+    volumes:
+      - product-mongo-data:/data/db
+
+volumes:
+  user-mongo-data:
+  product-mongo-data:
