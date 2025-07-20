@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { createClient } from "redis";
 import { Client as ElasticClient } from "@elastic/elasticsearch";
+import productRoutes from "./routes/product.routes";
 
 dotenv.config();
 
@@ -41,6 +42,8 @@ esClient.ping()
     console.error("❌ Elasticsearch connection error:", err);
     process.exit(1);
   });
+
+app.use("/products", productRoutes);
 
 // Sample route
 app.get("/", (req, res) => {
