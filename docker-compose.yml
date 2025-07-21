@@ -64,6 +64,31 @@ services:
     volumes:
       - product-mongo-data:/data/db
 
+  mongo-order:
+    image: mongo
+    container_name: mongo-order
+    ports:
+      - "27019:27017"
+    volumes:
+      - order-mongo-data:/data/db
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://mongo-order:27017/orderdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+    depends_on:
+      - mongo-order
+      - redis
+      - elasticsearch
+
 volumes:
   user-mongo-data:
   product-mongo-data:
+  order-mongo-data:
