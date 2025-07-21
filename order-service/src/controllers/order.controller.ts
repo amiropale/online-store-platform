@@ -2,8 +2,20 @@ import { Request, Response } from "express";
 import { Order } from "../models/order.model";
 import { redisClient } from "../redis/client";
 import { esClient } from "../elasticsearch/client";
+import { checkProductAvailability } from "../utils/productClient";
 
 export const createOrder = async (req: Request, res: Response) => {
+  const token = req.headers.authorization || "";
+
+  for (const item of req.body.products) {
+    const available = await checkProductAvailability(item.productId, item.quantity, token);
+    if (!available) {
+      return res.status(400).json({
+        message: `Product ${item.productId} is not available in required quantity.`,
+      });
+    }
+  }
+
   try {
     const order = new Order(req.body);
     const saved = await order.save();
