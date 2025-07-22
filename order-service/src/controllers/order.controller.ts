@@ -7,6 +7,13 @@ import { checkProductAvailability } from "../utils/productClient";
 export const createOrder = async (req: Request, res: Response) => {
   const token = req.headers.authorization || "";
 
+  const userEmail = (req as any).user?.email;
+  const userId = (req as any).user?.userId;
+
+  if (!userEmail || !userId) {
+    return res.status(400).json({ message: "User data missing in token" });
+  }
+
   for (const item of req.body.products) {
     const available = await checkProductAvailability(item.productId, item.quantity, token);
     if (!available) {
@@ -17,7 +24,13 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 
   try {
-    const order = new Order(req.body);
+    const order = new Order({
+      userId,
+      userEmail,
+      products: req.body.products,
+      totalPrice: req.body.totalPrice,
+    });
+
     const saved = await order.save();
 
     await redisClient.set(`order:${saved._id}`, JSON.stringify(saved));
@@ -96,6 +109,15 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       id,
       document: updated.toObject(),
     });
+
+    // Push notification payload to Redis queue
+    const notification = {
+      type: "email", // or "sms" or "push"
+      recipient: updated.userEmail || "user@example.com", // simulated recipient, must be replaced with actual user email via user-service
+      message: `Your order #${updated._id} status has been changed to "${updated.status}".`,
+    };
+
+    await redisClient.rPush("notifications", JSON.stringify(notification));
 
     res.json(updated);
   } catch (err) {
