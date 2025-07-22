@@ -10,11 +10,14 @@ export const createProduct = async (req: Request, res: Response) => {
     const product = new Product(req.body);
     await product.save();
 
+    // Index product in Elasticsearch with autocomplete
     await esClient.index({
       index: "products",
       id: product._id.toString(),
       document: {
-        name: product.name,
+        name: {
+          input: product.name, // autocomplete field
+        },
         description: product.description,
         price: product.price,
         category: product.category,
@@ -57,11 +60,14 @@ export const updateProduct = async (req: Request, res: Response) => {
 
     if (!updated) return res.status(404).json({ message: "Product not found" });
 
+    // Reindex updated product with autocomplete
     await esClient.index({
       index: "products",
       id,
       document: {
-        name: updated.name,
+        name: {
+          input: updated.name,
+        },
         description: updated.description,
         price: updated.price,
         category: updated.category,

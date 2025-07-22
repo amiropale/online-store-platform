@@ -1,7 +1,15 @@
 import express from "express";
-import { createProduct, getAllProducts } from "../controllers/product.controller";
-import { searchProducts } from "../controllers/product-search.controller";
-import { updateProduct, deleteProduct } from "../controllers/product.controller";
+import {
+  createProduct,
+  getAllProducts,
+  updateProduct,
+  deleteProduct,
+} from "../controllers/product.controller";
+
+import {
+  searchProducts,
+  autocompleteProducts,
+} from "../controllers/product-search.controller";
 
 const router = express.Router();
 
@@ -10,5 +18,6 @@ router.get("/", getAllProducts);
 router.get("/search", searchProducts);
 router.put("/:id", updateProduct);
 router.delete("/:id", deleteProduct);
+router.get("/autocomplete", autocompleteProducts);
 
 export default router;
