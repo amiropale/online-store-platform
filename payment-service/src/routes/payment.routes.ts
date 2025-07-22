@@ -1,9 +1,11 @@
-import { Router } from "express";
-import { processPayment } from "../controllers/payment.controller";
+import express from "express";
+import { confirmPayment, getMyPayments, searchPayments } from "../controllers/payment.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 
-const router = Router();
+const router = express.Router();
 
-router.post("/", authenticate, processPayment);
+router.post("/confirm", authenticate, confirmPayment);
+router.get("/", authenticate, getMyPayments);
+router.get("/search", authenticate, searchPayments);
 
 export default router;
