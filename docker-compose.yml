@@ -31,7 +31,7 @@ services:
       - "3001:3000"
     environment:
       - MONGO_URI=mongodb://mongo-user:27017/userdb
-      - JWT_SECRET=your_jwt_secret
+      - JWT_SECRET=${JWT_SECRET}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - ELASTICSEARCH_NODE=http://elasticsearch:9200
@@ -39,6 +39,14 @@ services:
       - mongo-user
       - redis
       - elasticsearch
+
+  mongo-product:
+    image: mongo
+    container_name: mongo-product
+    ports:
+      - "27018:27017"
+    volumes:
+      - product-mongo-data:/data/db
 
   product-service:
     build: ./product-service
@@ -55,14 +63,6 @@ services:
       - redis
       - elasticsearch
       - mongo-product
-
-  mongo-product:
-    image: mongo
-    container_name: mongo-product
-    ports:
-      - "27018:27017"
-    volumes:
-      - product-mongo-data:/data/db
 
   mongo-order:
     image: mongo
@@ -83,10 +83,13 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - ELASTICSEARCH_NODE=http://elasticsearch:9200
+      - JWT_SECRET=${JWT_SECRET}
+      - PRODUCT_SERVICE_URL=http://product-service:3002
     depends_on:
-      - mongo-order
       - redis
       - elasticsearch
+      - mongo-order
+      - product-service
 
   notification-service:
     build: ./notification-service
@@ -94,12 +97,39 @@ services:
     ports:
       - "3004:3004"
     environment:
+      - PORT=3004
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
+      - redis
+
+  mongo-payment:
+    image: mongo
+    container_name: mongo-payment
+    ports:
+      - "27020:27017"
+    volumes:
+      - payment-mongo-data:/data/db
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - MONGO_URI=mongodb://mongo-payment:27017/paymentdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ORDER_SERVICE_URL=http://order-service:3003
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mongo-payment
+      - order-service
       - redis
 
 volumes:
   user-mongo-data:
   product-mongo-data:
   order-mongo-data:
+  payment-mongo-data:
