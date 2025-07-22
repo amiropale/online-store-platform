@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate } from "../middlewares/auth.middleware";
 import {
   createProduct,
   getAllProducts,
@@ -13,11 +14,11 @@ import {
 
 const router = express.Router();
 
-router.post("/", createProduct);
+router.post("/", authenticate, createProduct);
+router.put("/:id", authenticate, updateProduct);
+router.delete("/:id", authenticate, deleteProduct);
 router.get("/", getAllProducts);
 router.get("/search", searchProducts);
-router.put("/:id", updateProduct);
-router.delete("/:id", deleteProduct);
 router.get("/autocomplete", autocompleteProducts);
 
 export default router;

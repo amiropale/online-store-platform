@@ -58,6 +58,7 @@ services:
       - MONGO_URI=mongodb://mongo-product:27017/productdb
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET}
       - ELASTICSEARCH_NODE=http://elasticsearch:9200
     depends_on:
       - redis
