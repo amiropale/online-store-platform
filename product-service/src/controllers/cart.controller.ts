@@ -14,9 +14,9 @@ export const addToCart = async (req: Request, res: Response) => {
 
     const existing = cart.find((item: any) => item.productId === productId);
     if (existing) {
-      existing.quantity += quantity;
+      existing.quantity += +quantity;
     } else {
-      cart.push({ productId, quantity });
+      cart.push({ productId, quantity: +quantity });
     }
 
     await redisClient.set(key, JSON.stringify(cart));
@@ -88,16 +88,17 @@ export const checkoutCart = async (req: Request, res: Response) => {
     const detailedProducts = [];
 
     for (const item of cart) {
-      const res = await axios.get(`http://product-service:3002/products/${item.productId}`, {
+      const productResponse = await axios.get(`http://product-service:3002/products/${item.productId}`, {
         headers: { Authorization: token || "" },
       });
 
-      const product = res.data;
+      const product = productResponse.data;
       if (product.inStock < item.quantity) {
         return res.status(400).json({
           message: `Not enough stock for ${product.name}`,
         });
       }
+
       totalPrice += product.price * item.quantity;
       detailedProducts.push({
         productId: item.productId,
