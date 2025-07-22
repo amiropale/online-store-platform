@@ -88,6 +88,17 @@ services:
       - redis
       - elasticsearch
 
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "3004:3004"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
 volumes:
   user-mongo-data:
   product-mongo-data:
