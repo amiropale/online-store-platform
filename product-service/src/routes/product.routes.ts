@@ -5,6 +5,7 @@ import {
   getAllProducts,
   updateProduct,
   deleteProduct,
+  decreaseStock,
 } from "../controllers/product.controller";
 
 import {
@@ -20,5 +21,6 @@ router.delete("/:id", authenticate, deleteProduct);
 router.get("/", getAllProducts);
 router.get("/search", searchProducts);
 router.get("/autocomplete", autocompleteProducts);
+router.post("/decrease-stock", decreaseStock);
 
 export default router;

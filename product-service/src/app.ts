@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { createClient } from "redis";
 import { Client as ElasticClient } from "@elastic/elasticsearch";
 import productRoutes from "./routes/product.routes";
+import cartRoutes from "./routes/cart.routes";
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ esClient.ping()
   });
 
 app.use("/products", productRoutes);
+app.use("/cart", cartRoutes);
 
 // Sample route
 app.get("/", (req, res) => {
