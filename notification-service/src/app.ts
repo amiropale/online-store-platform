@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { connectRedis } from "./queue/redis";
 import { startNotificationWorker } from "./services/notification.service";
 import { securityMiddleware } from "./middlewares/security.middleware";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -12,10 +13,10 @@ const PORT = process.env.PORT || 3004;
 async function startServer() {
   try {
     await connectRedis();
-    console.log("✅ Connected to Redis");
+    logger.info("✅ Connected to Redis");
 
     await startNotificationWorker();
-    console.log("📨 Notification worker started");
+    logger.info("📨 Notification worker started");
 
     app.use(express.json());
     app.use(securityMiddleware);
@@ -25,10 +26,10 @@ async function startServer() {
     });
 
     app.listen(PORT, () => {
-      console.log(`🚀 Notification Service listening on port ${PORT}`);
+      logger.info(`🚀 Notification Service listening on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ Startup error:", err);
+    logger.error("❌ Startup error:", err);
     process.exit(1);
   }
 }

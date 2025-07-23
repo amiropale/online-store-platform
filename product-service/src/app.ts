@@ -6,6 +6,7 @@ import { Client as ElasticClient } from "@elastic/elasticsearch";
 import productRoutes from "./routes/product.routes";
 import cartRoutes from "./routes/cart.routes";
 import { securityMiddleware } from "./middlewares/security.middleware";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -26,13 +27,12 @@ const esClient = new ElasticClient({
 async function startServer() {
   try {
     await mongoose.connect(process.env.MONGO_URI as string);
-    console.log("✅ Connected to MongoDB");
+    logger.info("✅ Connected to MongoDB");
 
     await redisClient.connect();
-    console.log("✅ Connected to Redis");
-
+    logger.info("✅ Connected to Redis");
     await esClient.ping();
-    console.log("✅ Connected to Elasticsearch");
+    logger.info("✅ Connected to Elasticsearch");
 
     app.use(express.json());
     app.use(securityMiddleware);
@@ -45,10 +45,10 @@ async function startServer() {
     });
 
     app.listen(PORT, () => {
-      console.log(`🚀 Product service listening on port ${PORT}`);
+      logger.info(`🚀 Product service listening on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ Startup error:", err);
+    logger.error("❌ Startup error:", err);
     process.exit(1);
   }
 }

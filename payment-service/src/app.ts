@@ -5,6 +5,7 @@ import { createClient } from "redis";
 import { Client as ElasticClient } from "@elastic/elasticsearch";
 import paymentRoutes from "./routes/payment.routes";
 import { securityMiddleware } from "./middlewares/security.middleware";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -25,13 +26,13 @@ export const esClient = new ElasticClient({
 async function startServer() {
   try {
     await mongoose.connect(process.env.MONGO_URI as string);
-    console.log("✅ MongoDB connected");
+    logger.info("✅ MongoDB connected");
 
     await redisClient.connect();
-    console.log("✅ Redis connected");
+    logger.info("✅ Redis connected");
 
     await esClient.ping();
-    console.log("✅ Elasticsearch connected");
+    logger.info("✅ Elasticsearch connected");
 
     app.use(express.json());
     app.use(securityMiddleware);
@@ -40,10 +41,10 @@ async function startServer() {
     app.get("/", (req, res) => res.send("🟢 Payment Service is running"));
 
     app.listen(PORT, () => {
-      console.log(`🚀 Payment service running on port ${PORT}`);
+      logger.info(`🚀 Payment service running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("❌ Startup error:", err);
+    logger.error("❌ Startup error:", err);
     process.exit(1);
   }
 }
