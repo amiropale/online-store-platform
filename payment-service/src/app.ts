@@ -4,12 +4,11 @@ import mongoose from "mongoose";
 import { createClient } from "redis";
 import { Client as ElasticClient } from "@elastic/elasticsearch";
 import paymentRoutes from "./routes/payment.routes";
+import { securityMiddleware } from "./middlewares/security.middleware";
 
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-
 const PORT = process.env.PORT || 3005;
 
 export const redisClient = createClient({
@@ -23,13 +22,9 @@ export const esClient = new ElasticClient({
   node: process.env.ELASTICSEARCH_NODE,
 });
 
-app.get("/", (req, res) => res.send("🟢 Payment Service is running"));
-
-app.use("/payments", paymentRoutes);
-
 async function startServer() {
   try {
-    await mongoose.connect(process.env.MONGO_URI!);
+    await mongoose.connect(process.env.MONGO_URI as string);
     console.log("✅ MongoDB connected");
 
     await redisClient.connect();
@@ -37,6 +32,12 @@ async function startServer() {
 
     await esClient.ping();
     console.log("✅ Elasticsearch connected");
+
+    app.use(express.json());
+    app.use(securityMiddleware);
+
+    app.use("/api/payments", paymentRoutes);
+    app.get("/", (req, res) => res.send("🟢 Payment Service is running"));
 
     app.listen(PORT, () => {
       console.log(`🚀 Payment service running on port ${PORT}`);

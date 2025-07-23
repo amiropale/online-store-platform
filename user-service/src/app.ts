@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import { connectRedis } from "./redis/client";
 import { initUserIndex } from "./elasticsearch/initIndex";
+import { securityMiddleware } from "./middlewares/security.middleware";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ dotenv.config();
     const app = express();
     app.use(express.json());
 
+    app.use(securityMiddleware);
     app.use("/api/auth", authRoutes);
 
     app.listen(3000, () => {
