@@ -21,9 +21,7 @@ async function startServer() {
     app.use(express.json());
     app.use(securityMiddleware);
 
-    app.get("/", (req, res) => {
-      res.send("🔔 Notification Service is running...");
-    });
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
 
     app.listen(PORT, () => {
       logger.info(`🚀 Notification Service listening on port ${PORT}`);

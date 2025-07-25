@@ -7,11 +7,42 @@ services:
     volumes:
       - user-mongo-data:/data/db
 
+  mongo-product:
+    image: mongo
+    container_name: mongo-product
+    ports:
+      - "27018:27017"
+    volumes:
+      - product-mongo-data:/data/db
+
+  mongo-order:
+    image: mongo
+    container_name: mongo-order
+    ports:
+      - "27019:27017"
+    volumes:
+      - order-mongo-data:/data/db
+
+  mongo-payment:
+    image: mongo
+    container_name: mongo-payment
+    ports:
+      - "27020:27017"
+    volumes:
+      - payment-mongo-data:/data/db
+
   redis:
     image: redis
     container_name: redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
@@ -23,6 +54,13 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   user-service:
     build: ./user-service
@@ -39,14 +77,11 @@ services:
       - mongo-user
       - redis
       - elasticsearch
-
-  mongo-product:
-    image: mongo
-    container_name: mongo-product
-    ports:
-      - "27018:27017"
-    volumes:
-      - product-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   product-service:
     build: ./product-service
@@ -64,14 +99,11 @@ services:
       - redis
       - elasticsearch
       - mongo-product
-
-  mongo-order:
-    image: mongo
-    container_name: mongo-order
-    ports:
-      - "27019:27017"
-    volumes:
-      - order-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   order-service:
     build: ./order-service
@@ -91,26 +123,11 @@ services:
       - elasticsearch
       - mongo-order
       - product-service
-
-  notification-service:
-    build: ./notification-service
-    container_name: notification-service
-    ports:
-      - "3004:3004"
-    environment:
-      - PORT=3004
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      - redis
-
-  mongo-payment:
-    image: mongo
-    container_name: mongo-payment
-    ports:
-      - "27020:27017"
-    volumes:
-      - payment-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   payment-service:
     build: ./payment-service
@@ -128,9 +145,33 @@ services:
       - mongo-payment
       - redis
       - elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   user-mongo-data:
   product-mongo-data:
   order-mongo-data:
   payment-mongo-data:
+  redis-data:
+  esdata:

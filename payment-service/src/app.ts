@@ -12,14 +12,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-export const redisClient = createClient({
+const redisClient = createClient({
   socket: {
     host: process.env.REDIS_HOST,
     port: Number(process.env.REDIS_PORT),
   },
 });
 
-export const esClient = new ElasticClient({
+const esClient = new ElasticClient({
   node: process.env.ELASTICSEARCH_NODE,
 });
 
@@ -37,8 +37,9 @@ async function startServer() {
     app.use(express.json());
     app.use(securityMiddleware);
 
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
+
     app.use("/api/payments", paymentRoutes);
-    app.get("/", (req, res) => res.send("🟢 Payment Service is running"));
 
     app.listen(PORT, () => {
       logger.info(`🚀 Payment service running on port ${PORT}`);

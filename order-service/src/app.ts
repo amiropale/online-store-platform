@@ -26,11 +26,9 @@ async function startServer() {
     app.use(express.json());
     app.use(securityMiddleware);
 
-    app.use("/api/orders", orderRoutes);
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
 
-    app.get("/", (req, res) => {
-      res.send("🟢 Order Service is running.");
-    });
+    app.use("/api/orders", orderRoutes);
 
     app.listen(PORT, () => {
       logger.info(`🚀 Order service listening on port ${PORT}`);

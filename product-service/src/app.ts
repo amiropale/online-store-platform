@@ -31,18 +31,17 @@ async function startServer() {
 
     await redisClient.connect();
     logger.info("✅ Connected to Redis");
+
     await esClient.ping();
     logger.info("✅ Connected to Elasticsearch");
 
     app.use(express.json());
     app.use(securityMiddleware);
 
+    app.get("/health", (_req, res) => res.status(200).send("OK"));
+
     app.use("/api/products", productRoutes);
     app.use("/api/cart", cartRoutes);
-
-    app.get("/", (req, res) => {
-      res.send("🟢 Product Service is running.");
-    });
 
     app.listen(PORT, () => {
       logger.info(`🚀 Product service listening on port ${PORT}`);

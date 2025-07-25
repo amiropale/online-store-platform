@@ -9,23 +9,34 @@ import { logger } from "./utils/logger";
 
 dotenv.config();
 
-(async () => {
+const startServer = async () => {
   try {
     await connectRedis();
     await initUserIndex();
+
     await mongoose.connect(process.env.MONGO_URI as string);
     logger.info("✅ Connected to MongoDB");
 
     const app = express();
+
     app.use(express.json());
 
     app.use(securityMiddleware);
+
+    app.get("/health", (_req, res) => {
+      res.status(200).json({ status: "ok", service: "user-service" });
+    });
+
     app.use("/api/auth", authRoutes);
 
-    app.listen(3000, () => {
-      logger.info("🚀 User Service running on port 3000");
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      logger.info(`🚀 User Service running on port ${PORT}`);
     });
   } catch (err) {
     logger.error("❌ Startup error:", err);
+    process.exit(1);
   }
-})();
+};
+
+startServer();
