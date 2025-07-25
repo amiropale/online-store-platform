@@ -32,7 +32,7 @@ services:
       - payment-mongo-data:/data/db
 
   redis:
-    image: redis
+    image: redis:6.2-alpine
     container_name: redis
     ports:
       - "6379:6379"
@@ -167,6 +167,34 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - USER_SERVICE_URL=http://user-service:3000
+      - PRODUCT_SERVICE_URL=http://product-service:3002
+      - ORDER_SERVICE_URL=http://order-service:3003
+      - PAYMENT_SERVICE_URL=http://payment-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3004
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+      - notification-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      
 
 volumes:
   user-mongo-data:
