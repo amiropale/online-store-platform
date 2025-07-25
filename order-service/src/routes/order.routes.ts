@@ -11,15 +11,11 @@ import { authenticate } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
-router.post("/", createOrder);
-router.get("/", getAllOrders);
-router.get("/:id", getOrderById);
-router.delete("/:id", deleteOrder);
-router.put("/:id/status", updateOrderStatus);
-router.get("/search", searchOrders);
 router.post("/", authenticate, createOrder);
 router.get("/", authenticate, getAllOrders);
 router.get("/:id", authenticate, getOrderById);
+router.delete("/:id", authenticate, deleteOrder);
+router.put("/:id/status", authenticate, updateOrderStatus);
 router.get("/search", authenticate, searchOrders);
 
 export default router;

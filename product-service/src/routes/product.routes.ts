@@ -5,6 +5,7 @@ import {
   getAllProducts,
   updateProduct,
   deleteProduct,
+  getProductById,
   decreaseStock,
 } from "../controllers/product.controller";
 
@@ -16,11 +17,12 @@ import {
 const router = express.Router();
 
 router.post("/", authenticate, createProduct);
-router.put("/:id", authenticate, updateProduct);
-router.delete("/:id", authenticate, deleteProduct);
-router.get("/", getAllProducts);
 router.get("/search", searchProducts);
 router.get("/autocomplete", autocompleteProducts);
+router.get("/", getAllProducts);
+router.get("/:id", getProductById);
+router.put("/:id", authenticate, updateProduct);
+router.delete("/:id", authenticate, deleteProduct);
 router.post("/decrease-stock", decreaseStock);
 
 export default router;

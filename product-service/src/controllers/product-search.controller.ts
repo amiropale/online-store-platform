@@ -14,12 +14,12 @@ export const searchProducts = async (req: Request, res: Response) => {
 
     const must: any[] = [];
 
-    // Full-text search on name and description
+    // Full-text search on fullName and description
     if (q) {
       must.push({
         multi_match: {
           query: q,
-          fields: ["name", "description"],
+          fields: ["fullName", "description"],
           fuzziness: "auto", // smart typo handling
         },
       });
@@ -55,7 +55,6 @@ export const searchProducts = async (req: Request, res: Response) => {
       },
     });
 
-
     const hits = result.hits.hits.map((hit: any) => hit._source);
 
     res.json(hits);
@@ -80,7 +79,7 @@ export const autocompleteProducts = async (req: Request, res: Response) => {
         product_suggest: {
           prefix: input,
           completion: {
-            field: "name.autocomplete",
+            field: "name",
             fuzzy: {
               fuzziness: "auto",
             },

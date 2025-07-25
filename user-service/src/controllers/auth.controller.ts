@@ -13,6 +13,7 @@ export const register = async (req: Request, res: Response) => {
 
   try {
     const user = await User.create({ email, password });
+
     try {
       await esClient.index({
         index: "users",
@@ -45,7 +46,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = generateToken({ id: user._id });
+    const token = generateToken({
+  userId: user._id.toString(),
+  email: user.email,
+});
 
     await redisClient.set(
       `session:${user._id}`,
@@ -66,6 +70,11 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const getProfile = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  res.status(200).json({ message: `Welcome user ${userId}` });
+  const userId = (req as any).user?.userId;
+  const email = (req as any).user?.email;
+
+  res.status(200).json({
+    message: `Welcome user ${userId}`,
+    email,
+  });
 };

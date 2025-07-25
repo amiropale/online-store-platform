@@ -15,16 +15,16 @@ export const createProduct = async (req: Request, res: Response) => {
       index: "products",
       id: product._id.toString(),
       document: {
-        name: {
-          input: product.name, // autocomplete field
-        },
+        name: { input: [product.name], },   // autocomplete
+        fullName: product.name,          // full-text search
         description: product.description,
         price: product.price,
         category: product.category,
         inStock: product.inStock,
-      },
+      }
     });
 
+    await esClient.indices.refresh({ index: "products" });
     await redisClient.del(PRODUCT_CACHE_KEY);
 
     res.status(201).json(product);
@@ -48,6 +48,22 @@ export const getAllProducts = async (req: Request, res: Response) => {
 
     res.status(200).json(products);
   } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
+
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json(product);
+  } catch (err) {
+    console.error("❌ Get product by ID error:", err);
     res.status(500).json({ message: "Server error", error: err });
   }
 };

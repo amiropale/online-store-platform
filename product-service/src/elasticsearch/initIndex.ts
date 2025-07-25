@@ -15,12 +15,10 @@ const createProductIndex = async () => {
           mappings: {
             properties: {
               name: {
-                type: "text",
-                fields: {
-                  autocomplete: {
-                    type: "completion",
-                  },
-                },
+                type: "completion"
+              },
+              fullName: {
+                type: "text"
               },
               description: { type: "text" },
               price: { type: "float" },

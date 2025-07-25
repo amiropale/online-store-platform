@@ -4,17 +4,24 @@ import { redisClient } from "../redis/client";
 import { esClient } from "../elasticsearch/client";
 import { checkProductAvailability } from "../utils/productClient";
 
-export const createOrder = async (req: Request, res: Response) => {
+interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+  };
+}
+
+export const createOrder = async (req: AuthenticatedRequest, res: Response) => {
   const token = req.headers.authorization || "";
 
-  const userEmail = (req as any).user?.email;
-  const userId = (req as any).user?.userId;
+  const userEmail = req.user?.email;
+  const userId = req.user?.userId;
 
   if (!userEmail || !userId) {
     return res.status(400).json({ message: "User data missing in token" });
   }
 
-  for (const item of req.body.products) {
+  for (const item of req.body.items) {
     const available = await checkProductAvailability(item.productId, item.quantity, token);
     if (!available) {
       return res.status(400).json({
@@ -27,18 +34,27 @@ export const createOrder = async (req: Request, res: Response) => {
     const order = new Order({
       userId,
       userEmail,
-      products: req.body.products,
+      products: req.body.items,
       totalPrice: req.body.totalPrice,
     });
 
     const saved = await order.save();
 
-    await redisClient.set(`order:${saved._id}`, JSON.stringify(saved));
+    const plainOrder = saved.toObject() as any;
+
+    const { _id, __v, ...orderData } = plainOrder;
+
+    orderData.products = orderData.products.map((product: any) => {
+      const { _id, ...rest } = product;
+      return rest;
+    });
+
+    await redisClient.set(`order:${saved._id}`, JSON.stringify({ _id: saved._id, ...orderData }));
 
     await esClient.index({
       index: "orders",
-      id: saved._id.toString(),
-      document: saved.toObject(),
+      id: _id.toString(),
+      document: orderData,
     });
 
     res.status(201).json(saved);
@@ -48,7 +64,7 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllOrders = async (req: Request, res: Response) => {
+export const getAllOrders = async (_req: Request, res: Response) => {
   try {
     const orders = await Order.find();
     res.json(orders);
@@ -61,16 +77,21 @@ export const getOrderById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    // First try Redis cache
     const cached = await redisClient.get(`order:${id}`);
     if (cached) return res.json(JSON.parse(cached));
 
-    // If not cached, get from DB
     const order = await Order.findById(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Cache it for next time
-    await redisClient.set(`order:${id}`, JSON.stringify(order));
+    const plainOrder = order.toObject() as any;
+    const { _id, __v, ...orderData } = plainOrder;
+
+    orderData.products = orderData.products.map((product: any) => {
+      const { _id, ...rest } = product;
+      return rest;
+    });
+
+    await redisClient.set(`order:${id}`, JSON.stringify({ _id: order._id, ...orderData }));
 
     res.json(order);
   } catch (err) {
@@ -100,20 +121,27 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
   try {
     const updated = await Order.findByIdAndUpdate(id, { status }, { new: true });
-
     if (!updated) return res.status(404).json({ message: "Order not found" });
 
-    await redisClient.set(`order:${id}`, JSON.stringify(updated));
+    const plainOrder = updated.toObject() as any;
+    const { _id, __v, ...orderData } = plainOrder;
+
+    orderData.products = orderData.products.map((product: any) => {
+      const { _id, ...rest } = product;
+      return rest;
+    });
+
+    await redisClient.set(`order:${id}`, JSON.stringify({ _id: updated._id, ...orderData }));
+
     await esClient.index({
       index: "orders",
       id,
-      document: updated.toObject(),
+      document: orderData,
     });
 
-    // Push notification payload to Redis queue
     const notification = {
-      type: "email", // or "sms" or "push"
-      recipient: updated.userEmail || "user@example.com", // simulated recipient, must be replaced with actual user email via user-service
+      type: "email",
+      recipient: updated.userEmail || "user@example.com",
       message: `Your order #${updated._id} status has been changed to "${updated.status}".`,
     };
 

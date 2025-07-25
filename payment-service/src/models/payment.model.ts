@@ -4,6 +4,7 @@ const PaymentSchema = new mongoose.Schema(
   {
     orderId: { type: String, required: true },
     userId: { type: String, required: true },
+    userEmail: { type: String }, 
     amount: { type: Number, required: true },
     status: {
       type: String,

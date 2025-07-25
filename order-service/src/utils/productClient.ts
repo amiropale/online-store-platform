@@ -9,7 +9,7 @@ export const checkProductAvailability = async (
   token?: string
 ): Promise<boolean> => {
   try {
-    const res = await axios.get<Product>(`${PRODUCT_SERVICE_URL}/products/${productId}`, {
+    const res = await axios.get<Product>(`${PRODUCT_SERVICE_URL}/api/products/${productId}`, {
       headers: token ? { Authorization: token } : {},
     });
 
